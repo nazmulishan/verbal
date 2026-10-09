@@ -2623,6 +2623,10 @@ body.bklock .tabbar,body.bklock #fdbtn,body.bklock #navback{display:none!importa
 }
 @media (max-width:420px){.bkposw input[type=range]{width:34vw}}
 </style>
+<style id="railfix">
+/* the chapter menu is taller than most screens: let it scroll on its own */
+@media (min-width:901px){nav.rail{max-height:calc(100vh - 36px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--line-2) transparent;padding-right:6px}nav.rail::-webkit-scrollbar{width:6px}nav.rail::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:3px}}
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -157969,6 +157973,20 @@ else setTimeout(function () { try { bkInit(); } catch (e) {} }, 0);
   if("IntersectionObserver" in window){
     var io=new IntersectionObserver(function(es){if(es[0].isIntersecting){io.disconnect();open();}},{rootMargin:"400px"}); io.observe(view);
   } else open();
+})();
+</script>
+<script>
+/* keep the chapter you are reading visible in the left menu, by scrolling the menu, never the page */
+(function(){
+  var rail=document.querySelector("nav.rail"); if(!rail||!window.MutationObserver)return;
+  function show(){
+    if(rail.scrollHeight<=rail.clientHeight+1)return;
+    var a=rail.querySelector("a.on"); if(!a)return;
+    var r=rail.getBoundingClientRect(), b=a.getBoundingClientRect();
+    if(b.top<r.top+8)rail.scrollTop-=(r.top+8-b.top);
+    else if(b.bottom>r.bottom-8)rail.scrollTop+=(b.bottom-(r.bottom-8));
+  }
+  new MutationObserver(show).observe(rail,{subtree:true,attributes:true,attributeFilter:["class"]});
 })();
 </script>
 </body>
