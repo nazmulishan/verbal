@@ -339,7 +339,6 @@ details.try li{margin:4px 0}
     var bid=k.split(":")[0], b=B[bid], x=idea(k), S=(D.secs||{})[b.sec], h='';
     h+='<div class="pp"><b class="lb">In plain words</b>'+(x.plain||x.rest||'')+'</div>';
     if(x.steps&&x.steps.length)h+='<div class="pp"><b class="lb">Worked example, step by step</b><ol class="steps">'+x.steps.map(function(s){return '<li>'+s+'</li>';}).join("")+'</ol></div>';
-    else if(x.eg)h+='<div class="pp"><b class="lb">Worked example</b>'+x.eg+'</div>';
     if(x.plain&&x.rest)h+='<div class="pp"><b class="lb">More detail</b>'+x.rest+'</div>';
     if(x.trap)h+='<div class="pp warn"><b class="lb">Watch out</b>'+x.trap+'</div>';
     var go=[];
