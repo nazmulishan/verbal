@@ -160,7 +160,7 @@ summary:focus-visible{outline:2px solid var(--learn);outline-offset:2px}
 
   <h2>How to work so you can concentrate</h2>
   <ul class="notes">
-    <li><b>One question at a time.</b> Don't scroll the long KMF page. Open a section in chapter 12 or the Exam Environment (chapter 11) and the screen shows one question only.</li>
+    <li><b>One question at a time.</b> Don't scroll the long KMF page. Open a section in chapter 13, the Exam Environment (chapter 12), or read the problems as a book: the screen shows one question only.</li>
     <li><b>Answer first, then read.</b> Read the logic route before the full working. The logic route is the part worth remembering.</li>
     <li><b>Work in 25-minute blocks.</b> One section, or six class problems, then a 5-minute break away from the screen.</li>
     <li><b>Theory comes from the 10 pages.</b> Use GregMat in 10 Pages for the ideas. Go to the full GregMat chapter only for a slide you need to see in full.</li>
@@ -170,15 +170,16 @@ summary:focus-visible{outline:2px solid var(--learn);outline-offset:2px}
 
   <h2>Where things are in KMF Quant</h2>
   <div class="tw"><table class="map"><tbody>
-    <tr><td>02–08</td><td>The 1,000 problems worked by topic. Use these to review your misses.</td></tr>
-    <tr><td>09</td><td>Visual Toolkit: 148 picture cards, filed in the same eight sections.</td></tr>
-    <tr><td>10 · 23</td><td>Formulas (197 live cards) and Formula Check (drills you on them).</td></tr>
-    <tr><td>11 · 12</td><td>Exam Environment and The 74 Sections: one question at a time, test layout.</td></tr>
-    <tr><td>13 · 14</td><td>Mock Exam (27 questions, 47 minutes) and the Error Log.</td></tr>
-    <tr><td>15</td><td>Concept Check: 437 short questions on the ideas.</td></tr>
-    <tr><td>16–19</td><td>Words & Keywords, Units, Where to Start, Read the Question: short reading drills.</td></tr>
-    <tr><td>25</td><td>Quant by Class: the 8 KMF class sets, 236 problems.</td></tr>
-    <tr><td>27</td><td>GregMat in 10 Pages: also open on its own as a separate page.</td></tr>
+    <tr><td>02–09</td><td>The 1,000 problems worked by topic (05 is Coordinate Geometry). Use these to review your misses, or press <b>Read as a book</b> for one problem a page.</td></tr>
+    <tr><td>10</td><td>Visual Toolkit: 148 picture cards, filed in the same eight sections.</td></tr>
+    <tr><td>11 · 24</td><td>Formulas (197 live cards) and Formula Check (drills you on them).</td></tr>
+    <tr><td>12 · 13</td><td>Exam Environment and The 74 Sections: one question at a time, test layout.</td></tr>
+    <tr><td>14 · 15</td><td>Mock Exam (27 questions, 47 minutes) and the Error Log.</td></tr>
+    <tr><td>16</td><td>Concept Check: 437 short questions on the ideas.</td></tr>
+    <tr><td>17–20</td><td>Words & Keywords, Units, Where to Start, Read the Question: short reading drills.</td></tr>
+    <tr><td>25</td><td>Concept Boards: one picture you can move per topic, every rule answering at once.</td></tr>
+    <tr><td>26</td><td>Quant by Class: the 8 KMF class sets, 236 problems.</td></tr>
+    <tr><td>28 · 29</td><td>GregMat in 10 Pages and Concept Boards in Pages: the short book versions, also open on their own.</td></tr>
   </tbody></table></div>
 </main></div>
 
@@ -197,12 +198,12 @@ summary:focus-visible{outline:2px solid var(--learn);outline-offset:2px}
     {name:"Sets, Counting & Probability",tk:"Data Analysis",cls:"08",n:43,gm:[9,10]}
   ];
   var DRILLS=[
-    ["KMF 19 · Read the Question","10 drills on reading the stem"],
-    ["KMF 16 · Words & Keywords","10 drills on the wording"],
-    ["KMF 17 · Units & Conversion","10 conversion drills"],
-    ["KMF 18 · Where to Start","one playbook and its worked openings"],
-    ["KMF 24 · Concept Boards","one board: try every “things to try”"],
-    ["KMF 23 · Formula Check","drill “the ones you missed”"]
+    ["KMF 20 · Read the Question","10 drills on reading the stem"],
+    ["KMF 17 · Words & Keywords","10 drills on the wording"],
+    ["KMF 18 · Units & Conversion","10 conversion drills"],
+    ["KMF 19 · Where to Start","one playbook and its worked openings"],
+    ["KMF 25 · Concept Boards","one board: try every “things to try”"],
+    ["KMF 24 · Formula Check","drill “the ones you missed”"]
   ];
   var PH={learn:{n:"Phase 1",t:"Learn",cls:"learn"},prac:{n:"Phase 2",t:"Practise",cls:"prac"},test:{n:"Phase 3",t:"Test",cls:"test"},rest:{n:"Rest day",t:"Light review",cls:"rest"}};
 
@@ -236,11 +237,11 @@ summary:focus-visible{outline:2px solid var(--learn);outline-offset:2px}
         var pages=T.gm.length<=nd?(T.gm[j]?[T.gm[j]]:[]):(j===0?T.gm:[]);
         pages.forEach(function(p){L.push({w:"GregMat · page "+p,d:"Read page "+p+" in Read mode; open the full slide for anything that feels new.",m:15});});
         if(j===0&&T.gmCover)L.push({w:"GregMat · page "+T.gmCover,d:"Go over “Reading data” on page "+T.gmCover+" in Cover mode.",m:10});
-        if(j===0)L.push({w:"KMF 09 · Visual Toolkit",d:"Read the "+T.tk+" cards. Look at each picture until the rule makes sense.",m:30});
-        if(j===(nd>1?1:0))L.push({w:"KMF 10 · Formulas",d:"Move the sliders on the "+T.tk+" formula cards; read every trap line.",m:20});
-        var r=ranges[j]; if(r[1]>=r[0])L.push({w:"KMF 25 · Class "+T.cls,d:"Quant by Class, "+T.name+": problems "+r[0]+"–"+r[1]+". Answer first, then read the logic route.",m:(r[1]-r[0]+1)*4});
-        if(j===nd-1){L.push({w:"KMF 15 · Concept Check",d:T.tk+" questions. Every wrong pick names the mistake: read it.",m:20});
-          L.push({w:"KMF 23 · Formula Check",d:"Drill the "+T.tk+" formulas from memory.",m:10});}
+        if(j===0)L.push({w:"KMF 10 · Visual Toolkit",d:"Read the "+T.tk+" cards. Look at each picture until the rule makes sense.",m:30});
+        if(j===(nd>1?1:0))L.push({w:"KMF 11 · Formulas",d:"Move the sliders on the "+T.tk+" formula cards; read every trap line.",m:20});
+        var r=ranges[j]; if(r[1]>=r[0])L.push({w:"KMF 26 · Class "+T.cls,d:"Quant by Class, "+T.name+": problems "+r[0]+"–"+r[1]+". Answer first, then read the logic route.",m:(r[1]-r[0]+1)*4});
+        if(j===nd-1){L.push({w:"KMF 16 · Concept Check",d:T.tk+" questions. Every wrong pick names the mistake: read it.",m:20});
+          L.push({w:"KMF 24 · Formula Check",d:"Drill the "+T.tk+" formulas from memory.",m:10});}
         learn.push({ph:"learn",focus:T.name,part:(nd>1?"day "+(j+1)+" of "+nd:""),tasks:L}); s++;
       }
     });
@@ -248,7 +249,7 @@ summary:focus-visible{outline:2px solid var(--learn);outline-offset:2px}
     for(var i=0;i<P2;i++){
       var L2=[], a=secs[i][0], b=secs[i][1];
       for(var q=a;q<=b;q++){var hard=q%2===0, nq=q===74?16:(hard?15:12), mins=q===74?28:(hard?26:21);
-        L2.push({w:"KMF 12 · Section "+q,d:"Sit Section "+q+" ("+(hard?"Hard":"Medium")+", "+nq+" questions, "+mins+" min). Choose “answers at the end”.",m:mins});}
+        L2.push({w:"KMF 13 · Section "+q,d:"Sit Section "+q+" ("+(hard?"Hard":"Medium")+", "+nq+" questions, "+mins+" min). Choose “answers at the end”.",m:mins});}
       L2.push({w:"Review",d:"Open the working for every miss in its chapter. Write the idea in one line.",m:10*(b-a+1)});
       var gp=(gmRot++%10)+1; L2.push({w:"GregMat · page "+gp,d:"Read page "+gp+" in Cover mode; tick what you know.",m:10});
       var dr=DRILLS[rot++%DRILLS.length]; L2.push({w:dr[0],d:dr[1]+".",m:10});
@@ -258,15 +259,15 @@ summary:focus-visible{outline:2px solid var(--learn);outline-offset:2px}
     for(var k=0;k<P3;k++){
       var L3=[];
       if(k%2===0){mockNo++;
-        L3.push({w:"KMF 13 · Mock Exam",d:"Mock "+mockNo+": both sections, timed, phone in another room.",m:47});
+        L3.push({w:"KMF 14 · Mock Exam",d:"Mock "+mockNo+": both sections, timed, phone in another room.",m:47});
         L3.push({w:"Review",d:"Read the mock report; open the working for every miss and every guess.",m:40});
         var gq=(gmRot++%10)+1; L3.push({w:"GregMat · page "+gq,d:"Page "+gq+" in Cover mode.",m:10});
         test.push({ph:"test",focus:"Mock "+mockNo,part:"",tasks:L3});
       }else{
-        L3.push({w:"KMF 14 · Error Log",d:"Drill your three weakest ideas with the drill buttons.",m:45});
-        L3.push({w:"KMF 23 · Formula Check",d:"The sheet: every formula, right-hand side covered.",m:15});
-        if(firstRepair){L3.push({w:"KMF 20 · Answers That Do Not Match",d:"Read the notes so a doubtful key never shakes you.",m:15});firstRepair=false;}
-        else L3.push({w:"KMF 19 · Read the Question",d:"20 drills.",m:15});
+        L3.push({w:"KMF 15 · Error Log",d:"Drill your three weakest ideas with the drill buttons.",m:45});
+        L3.push({w:"KMF 24 · Formula Check",d:"The sheet: every formula, right-hand side covered.",m:15});
+        if(firstRepair){L3.push({w:"KMF 21 · Answers That Do Not Match",d:"Read the notes so a doubtful key never shakes you.",m:15});firstRepair=false;}
+        else L3.push({w:"KMF 20 · Read the Question",d:"20 drills.",m:15});
         test.push({ph:"test",focus:"Fix the weak spots",part:"",tasks:L3});
       }
     }
@@ -278,7 +279,7 @@ summary:focus-visible{outline:2px solid var(--learn);outline-offset:2px}
           {w:"GregMat · all 10 pages",d:"Read all ten pages once in Read mode. Nothing new today.",m:40},
           {w:"Rest",d:"Sleep early. You are ready for the paper.",m:0}]:[
           {w:"GregMat · all 10 pages",d:"Read all ten pages in Cover mode. Tick what you know; the rest stays for next week.",m:40},
-          {w:"KMF 14 · Error Log",d:"Look over this week's misses. Which idea came up twice?",m:20},
+          {w:"KMF 15 · Error Log",d:"Look over this week's misses. Which idea came up twice?",m:20},
           {w:"Rest",d:"That's the day. Catch up on anything unticked only if you want to.",m:0}]});
       }else days.push(seq[si++]);
     }
