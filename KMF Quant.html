@@ -2627,6 +2627,33 @@ body.bklock .tabbar,body.bklock #fdbtn,body.bklock #navback{display:none!importa
   .bkpill{bottom:calc(66px + env(safe-area-inset-bottom,0px))}
 }
 @media (max-width:420px){.bkposw input[type=range]{width:34vw}}
+
+/* the full solution in its own pane, the same as the exam screen */
+.bkbody{flex:1 1 auto;min-height:0;display:flex;position:relative}
+.bkbody>.bkscroll{flex:1 1 auto;min-width:0}
+.bkgrip{display:none;flex:0 0 auto;width:9px;cursor:col-resize;background:var(--line);position:relative;touch-action:none;
+  border-left:1px solid var(--line-2);border-right:1px solid var(--line-2)}
+.bkgrip::after{content:"";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:3px;height:44px;border-radius:2px;background:var(--ink-3);opacity:.55}
+.bkgrip:hover,.bkgrip.drag{background:var(--blue)}
+.bkgrip:hover::after,.bkgrip.drag::after{background:#fff;opacity:.9}
+#bkstage.solon .bkgrip{display:block}
+.bksol{flex:0 0 var(--bksolw,46%);min-width:0;overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;background:var(--panel-2);padding:0 0 60px}
+.bksol-hd{position:sticky;top:0;z-index:3;background:var(--xbar-2);color:#fff;display:flex;align-items:center;gap:10px;padding:9px 14px}
+.bksol-hd b{font-family:Archivo,sans-serif;font-size:12.5px;font-weight:600;letter-spacing:.02em}
+.bksol-hd .sp{margin-left:auto;display:flex;gap:6px}
+.bksol-hd button{background:#555E66;border:1px solid #6C757D;color:#fff;border-radius:3px;cursor:pointer;font-family:Archivo,sans-serif;font-size:11px;font-weight:600;padding:4px 9px}
+.bksol-hd button:hover{background:#69737B}
+.bksol-hd button:focus-visible{outline:2px solid #fff;outline-offset:1px}
+.bksol-body{padding:16px 18px 0}
+.bksol-body>.sol{display:block;margin:0}
+@media (max-width:859px){
+  .bkbody{flex-direction:column}
+  #bkstage.solon .bkscroll{min-height:90px}
+  .bkgrip{width:auto;height:9px;cursor:row-resize;border-left:0;border-right:0;border-top:1px solid var(--line-2);border-bottom:1px solid var(--line-2)}
+  .bkgrip::after{width:44px;height:3px}
+  .bksol{flex:0 0 var(--bksolh,58%)}
+  .bksol-body{padding:10px 12px 0}
+}
 </style>
 <style id="railfix">
 /* the chapter menu is taller than most screens: let it scroll on its own */
@@ -161810,6 +161837,7 @@ function bkSweep() {
 }
 function bkGive() {
   var p = BK.prob, host = bkHost();
+  bkSolHome(p);
   if (BK.obs) { try { BK.obs.disconnect(); } catch (e) {} BK.obs = null; }
   bkPill(false);
   if (BK.figbtn) { try { BK.figbtn.parentNode.removeChild(BK.figbtn); } catch (e) {} BK.figbtn = null; }
@@ -161820,7 +161848,7 @@ function bkGive() {
     else if (p.closest && p.closest("main")) { var ph = BK.phs[p.id]; if (ph && ph.parentNode) ph.parentNode.removeChild(ph); delete BK.phs[p.id]; }
     /* anything else: another reader holds it and will hand it back to this page; the sweep returns it home */
   }
-  bkSweep();
+  bkSweep(); bkSolSync();
 }
 function bkTake(p) {
   if (!p || !p.closest || !p.closest("main")) return false;   /* only borrow a problem that is at home */
@@ -161852,6 +161880,48 @@ function bkFigButton(p) {
     if (BK.fig) try { sol.querySelectorAll(".vo").length; voWire(p); } catch (e) {}
   });
   at.parentNode.insertBefore(b, at); BK.figbtn = b; bkFigLabel();
+}
+
+/* ---- the working opens in its own pane, as on the exam screen: beside the page, or under it on a phone ---- */
+function bkSolNarrow() { try { return window.matchMedia("(max-width: 859px)").matches; } catch (e) { return false; } }
+function bkSolHome(p) {
+  var sol = p && p._bksol; if (!sol) return;
+  var ph = p._bksolph;
+  if (ph && ph.parentNode) { ph.parentNode.insertBefore(sol, ph); ph.parentNode.removeChild(ph); } else p.appendChild(sol);
+  p._bksol = null; p._bksolph = null;
+}
+function bkSolSync() {
+  var stage = document.getElementById("bkstage"), pane = document.getElementById("bksol"), body = document.getElementById("bksolbody");
+  if (!stage || !pane || !body) return;
+  var p = BK.prob, open = !!(p && BK.at >= 0 && p.classList.contains("open"));
+  if (open && !p._bksol) {
+    var sol = null;
+    for (var i = 0; i < p.children.length; i++) if (p.children[i].classList.contains("sol")) { sol = p.children[i]; break; }
+    if (sol) {
+      var ph = document.createComment("bksol"); sol.parentNode.insertBefore(ph, sol);
+      p._bksol = sol; p._bksolph = ph; body.appendChild(sol); pane.scrollTop = 0;
+    }
+  } else if (!open && p && p._bksol) bkSolHome(p);
+  var on = open && !!p._bksol;
+  pane.hidden = !on; stage.classList.toggle("solon", on);
+}
+function bkSolSize(d) {
+  var stage = document.getElementById("bkstage");
+  if (bkSolNarrow()) { BK.solh = Math.max(30, Math.min(80, (BK.solh || 58) + d)); stage.style.setProperty("--bksolh", BK.solh + "%"); }
+  else { BK.solw = Math.max(28, Math.min(72, (BK.solw || 46) + d)); stage.style.setProperty("--bksolw", BK.solw + "%"); }
+}
+function bkSolGrip() {
+  var g = document.getElementById("bkgrip"), body = document.getElementById("bkbody"), on = false;
+  if (!g || !body) return;
+  g.addEventListener("pointerdown", function (e) { on = true; g.classList.add("drag"); try { g.setPointerCapture(e.pointerId); } catch (x) {} e.preventDefault(); });
+  g.addEventListener("pointermove", function (e) {
+    if (!on) return;
+    var r = body.getBoundingClientRect(), stage = document.getElementById("bkstage");
+    if (bkSolNarrow()) { BK.solh = Math.max(25, Math.min(85, Math.round((r.bottom - e.clientY) / r.height * 100))); stage.style.setProperty("--bksolh", BK.solh + "%"); }
+    else { BK.solw = Math.max(25, Math.min(75, Math.round((r.right - e.clientX) / r.width * 100))); stage.style.setProperty("--bksolw", BK.solw + "%"); }
+  });
+  function up() { on = false; g.classList.remove("drag"); }
+  g.addEventListener("pointerup", up); g.addEventListener("pointercancel", up);
 }
 
 /* ---- opening and closing the book ---- */
@@ -161902,9 +161972,10 @@ function bkGo(i, dir) {
   bkHost().hidden = false;
   if (BK.obs) { try { BK.obs.disconnect(); } catch (e) {} BK.obs = null; }
   try {
-    BK.obs = new MutationObserver(function () { bkEnd(); bkPillCheck(true); });
+    BK.obs = new MutationObserver(function () { bkSolSync(); bkEnd(); bkPillCheck(true); });
     BK.obs.observe(p, { attributes: true, attributeFilter: ["class"] });
   } catch (e) {}
+  bkSolSync();
   bkChrome(); bkTurn(dir); bkSave();
   setTimeout(function () { navSkip = false; }, 450);
 }
@@ -161966,7 +162037,7 @@ function bkEnd() {
   end.hidden = false;
   var done = p.classList.contains("open") || !!p.querySelector(".opt.right,.opt.wrong,.numfb.good,.numfb.bad");
   var nid = BK.at + 1 < BK.list.length ? BK.list[BK.at + 1] : null;
-  end.innerHTML = (done ? '<button type="button" class="bkb" data-a="again">Try it again</button>' : '<span class="bknote">Pick an answer. The working opens under it.</span>')
+  end.innerHTML = (done ? '<button type="button" class="bkb" data-a="again">Try it again</button>' : '<span class="bknote">Pick an answer. The full solution opens in its own pane.</span>')
     + (nid ? '<button type="button" class="bkb pri" data-a="next">Next page: ' + bkEsc(bkLabel(nid)) + ' &#8594;</button>' : '<span class="bknote">This is the last page of the book.</span>');
 }
 
@@ -162059,6 +162130,7 @@ function bkBuild() {
       '<div class="bkseg" role="group" aria-label="Reading order">' +
         '<button type="button" data-o="chap">By chapter</button><button type="button" data-o="sec">By section</button></div>' +
     '</div>' +
+    '<div class="bkbody" id="bkbody">' +
     '<div class="bkscroll" id="bkscroll" tabindex="-1">' +
       '<article class="bksheet" id="bksheet">' +
         '<header class="bkrhead"><span id="bkrl"></span><span id="bkrr"></span></header>' +
@@ -162068,6 +162140,11 @@ function bkBuild() {
         '<footer class="bkfolio" id="bkfolio"></footer>' +
       '</article>' +
     '</div>' +
+    '<div class="bkgrip" id="bkgrip" aria-hidden="true"></div>' +
+    '<aside class="bksol" id="bksol" hidden aria-label="The full solution"><div class="bksol-hd"><b>The full solution</b><span class="sp">' +
+      '<button type="button" data-a="solwide">Wider</button><button type="button" data-a="solnarrow">Narrower</button>' +
+      '<button type="button" data-a="solhide">Hide</button></span></div><div class="bksol-body" id="bksolbody"></div></aside>' +
+    '</div>' +
     '<button type="button" class="bkpill" id="bkpill" hidden>The working is below &#8595;</button>' +
     '<div class="bkfoot">' +
       '<button type="button" class="bkturnb" id="bkprev" data-a="prev" aria-label="Previous page"><span class="ar">&#8249;</span><span class="lb"></span></button>' +
@@ -162075,6 +162152,7 @@ function bkBuild() {
       '<button type="button" class="bkturnb nx" id="bknext" data-a="next" aria-label="Next page"><span class="lb"></span><span class="ar">&#8250;</span></button>' +
     '</div>';
   document.body.appendChild(stage);
+  bkSolGrip();
 
   /* buttons in the bars and on the page */
   stage.addEventListener("click", function (e) {
@@ -162082,6 +162160,8 @@ function bkBuild() {
     if (!a || !stage.contains(a) || (BK.prob && BK.prob.contains(a))) return;
     var act = a.getAttribute("data-a");
     if (act === "close") bkClose();
+    else if (act === "solhide") { if (BK.prob) setOpen(BK.prob, false); }
+    else if (act === "solwide" || act === "solnarrow") bkSolSize(act === "solwide" ? 8 : -8);
     else if (act === "prev") bkStep(-1);
     else if (act === "next") bkStep(1);
     else if (act === "again") bkReset();
