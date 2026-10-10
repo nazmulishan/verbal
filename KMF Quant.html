@@ -2555,6 +2555,11 @@ body.bklock .tabbar,body.bklock #fdbtn,body.bklock #navback{display:none!importa
 #bkhost .opts{margin-top:14px}
 #bkstage .stopen,#bkstage .xopen,#bkstage .bkopen{display:none!important}
 #bkhost .prob-hd .srcbadge{display:none}
+#bkhost:not(.figon) .figcap,#bkhost:not(.figon) .solver{display:none}
+.bkfigbtn{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;margin:16px 0 4px;padding:8px 14px;border:1px dashed var(--line-2);border-radius:999px;background:transparent;color:var(--ink-2);font-family:Archivo,system-ui,sans-serif;font-size:13px;font-weight:600;cursor:pointer}
+.bkfigbtn span{font-weight:500;color:var(--ink-3)}
+.bkfigbtn:hover{border-color:var(--blue);color:var(--blue)}
+#bkhost.figon .bkfigbtn{border-style:solid}
 #bkhost .figcap:has(+ .solver[style*="none"]){display:none}
 
 .bkend{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;justify-content:space-between;margin:28px 0 0;padding:14px 0 0;border-top:1px solid var(--line)}
@@ -157293,14 +157298,15 @@ var BK = {
   ready: false, on: false, order: "chap", list: [], groups: [], gof: [], at: -1,
   prob: null, phs: {}, meta: {}, all: [], chap: [],
   pushed: false, ignorePop: false, saveY: 0, back: null,
-  t0: 0, picks: [], logged: false, wasOpen: false, dirty: false, obs: null
+  t0: 0, picks: [], logged: false, wasOpen: false, dirty: false, obs: null,
+  fig: false, figbtn: null
 };
 var BKCH = ["c2", "c3", "cg", "cr", "cd", "cst", "cp", "cbd"];
 var BKKEY = "kmf.book.v1";
 
 function bkLoad() { try { return JSON.parse(localStorage.getItem(BKKEY) || "null") || {}; } catch (e) { return {}; } }
 function bkSave() {
-  try { localStorage.setItem(BKKEY, JSON.stringify({ o: BK.order, id: BK.prob ? BK.prob.id : (bkLoad().id || null) })); } catch (e) {}
+  try { localStorage.setItem(BKKEY, JSON.stringify({ o: BK.order, id: BK.prob ? BK.prob.id : (bkLoad().id || null), fig: BK.fig })); } catch (e) {}
 }
 function bkEsc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
 function bkTxt(el) { return el ? el.textContent.replace(/\s+/g, " ").trim() : ""; }
@@ -157370,6 +157376,7 @@ function bkGive() {
   var p = BK.prob, host = bkHost();
   if (BK.obs) { try { BK.obs.disconnect(); } catch (e) {} BK.obs = null; }
   bkPill(false);
+  if (BK.figbtn) { try { BK.figbtn.parentNode.removeChild(BK.figbtn); } catch (e) {} BK.figbtn = null; }
   BK.prob = null;
   if (p) {
     navSkip = true;
@@ -157389,7 +157396,26 @@ function bkTake(p) {
   try { p.querySelectorAll("[data-solver]").forEach(function (h) { mountOne(h); }); } catch (e) {}
   try { if (typeof EXD === "object" && EXD && EXD[p.id]) exMount(p); } catch (e) {}
   try { voWire(p); } catch (e) {}
+  bkFigButton(p);
   return true;
+}
+
+/* ---- the live figure stays out of the way, as on the exam screen, until it is asked for ---- */
+function bkFigLabel() {
+  var b = BK.figbtn; if (!b) return;
+  b.innerHTML = BK.fig ? "Hide the live figure &#9652;" : "Show the live figure &#9662; <span>the one you can move, not part of the question</span>";
+  b.setAttribute("aria-expanded", String(BK.fig));
+}
+function bkFigButton(p) {
+  var host = bkHost(); host.classList.toggle("figon", BK.fig);
+  var sol = p.querySelector(".solver"); if (!sol || sol.style.display === "none") return;
+  var at = p.querySelector(".figcap") || sol;
+  var b = document.createElement("button"); b.type = "button"; b.className = "bkfigbtn";
+  b.addEventListener("click", function () {
+    BK.fig = !BK.fig; host.classList.toggle("figon", BK.fig); bkFigLabel(); bkSave();
+    if (BK.fig) try { sol.querySelectorAll(".vo").length; voWire(p); } catch (e) {}
+  });
+  at.parentNode.insertBefore(b, at); BK.figbtn = b; bkFigLabel();
 }
 
 /* ---- opening and closing the book ---- */
@@ -157758,7 +157784,7 @@ function bkInit() {
   if (document.getElementById("bkstage")) return;
   bkIndex();
   if (!BK.all.length) return;
-  var s = bkLoad(); BK.order = s.o === "sec" ? "sec" : "chap";
+  var s = bkLoad(); BK.order = s.o === "sec" ? "sec" : "chap"; BK.fig = s.fig === true;
   bkList(); bkBuild(); bkDoors();
   BK.ready = true;
 }
