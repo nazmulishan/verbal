@@ -468,7 +468,7 @@ details.try li{margin:4px 0}
 
   /* inside KMF Quant the page around this one answers, and the live boards can be opened from here */
   window.addEventListener("message",function(e){
-    if(e.source!==window.parent||window.parent===window)return; var d=e.data; if(!d||!d.kmfHost||HOST)return;
+    if(e.source!==window.parent||window.parent===window)return; var d=e.data; if(!d)return; if(typeof d.kmfGo==="number"){go(d.kmfGo);return;} if(!d.kmfHost||HOST)return;
     HOST=true; document.documentElement.classList.add("inkmf"); if(st.page===0)render(0);
   });
 
