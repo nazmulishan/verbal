@@ -137,7 +137,7 @@ main{flex:1;width:100%;max-width:1180px;margin:0 auto;padding:20px 16px 48px}
     return t===k || (!isNaN(num(t))&&!isNaN(num(k))&&Math.abs(num(t)-num(k))<1e-9);
   }
   var VIEWS=C.views, V=S.v||VIEWS[0][0]; if(!VIEWS.some(function(v){return v[0]===V;}))V=VIEWS[0][0];
-  function inView(q,v){return v==="all"||q.t===v;}
+  function inView(q,v){return v==="all"||q.t===v||(v==="new"&&q.t==="Q"&&!q.kmf)||(v==="kmf"&&q.t==="Q"&&!!q.kmf);}
   function list(m){return m.qs.filter(function(q){return inView(q,V);});}
   function kmfLab(q){return q.kmf.indexOf("BTD")===0?"In KMF: Beyond the Deck "+q.kmf.slice(3):"In KMF: problem #"+q.kmf;}
   var cur={m:-1,i:0,view:"home"};
