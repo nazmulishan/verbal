@@ -25204,11 +25204,32 @@ body.bklock .tabbar,body.bklock #fdbtn,body.bklock #navback{display:none!importa
 #ttsBar button{border:1px solid var(--line-2);background:var(--panel);color:var(--ink);border-radius:999px;padding:4px 10px;cursor:pointer;font:inherit}
 #ttsBar .n{color:var(--ink-2);font-variant-numeric:tabular-nums;min-width:48px;text-align:center}
 </style>
-<div id="ttsBar" hidden role="group" aria-label="Listen"><button type="button" data-tt="pause">⏸ Pause</button><button type="button" data-tt="next">Next ⏭</button><button type="button" data-tt="speed">1×</button><span class="n" id="ttsN"></span><button type="button" data-tt="stop">✕</button></div>
+<div id="ttsBar" hidden role="group" aria-label="Listen"><button type="button" data-tt="pause">⏸ Pause</button><button type="button" data-tt="next">Next ⏭</button><button type="button" data-tt="speed">1×</button><select id="ttsVoice" aria-label="Voice" style="max-width:150px;border:1px solid var(--line-2);border-radius:999px;padding:3px 6px;background:var(--panel);color:var(--ink);font:inherit"></select><span class="n" id="ttsN"></span><button type="button" data-tt="stop">✕</button></div>
 <script id="kmf-tts">
 (function(){
   var S=window.speechSynthesis; if(!S)return;
-  var Q=[],at=0,paused=false,rate=1,cur=null;
+  var Q=[],at=0,paused=false,rate=1,cur=null,VO=null;
+  function voices(){
+    var V=S.getVoices().filter(function(v){return /^en/i.test(v.lang);});
+    function score(v){var n=v.name;return (/Natural|Neural/i.test(n)?100:0)+(/Online/i.test(n)?30:0)+(/Google US English|Google UK English Female|Samantha|Ava|Aria|Jenny|Emma|Libby|Sonia|Karen|Daniel/i.test(n)?40:0)+(/en-US|en_US/i.test(v.lang)?5:0);}
+    V.sort(function(a,b){return score(b)-score(a);});
+    var sel=document.getElementById("ttsVoice"), keep=null; try{keep=localStorage.getItem("kmf.tts.voice");}catch(x){}
+    if(sel){sel.innerHTML=V.map(function(v,i){return '<option value="'+i+'">'+v.name.replace(/Microsoft |Google /,"").slice(0,28)+'</option>';}).join("");}
+    VO=V.filter(function(v){return v.name===keep;})[0]||V[0]||null;
+    if(sel&&VO)sel.value=String(V.indexOf(VO)); voices.list=V;
+  }
+  voices(); if(S.onvoiceschanged!==undefined)S.onvoiceschanged=voices;
+  document.addEventListener("change",function(e){if(e.target&&e.target.id==="ttsVoice"){VO=voices.list[+e.target.value];try{localStorage.setItem("kmf.tts.voice",VO.name);}catch(x){}}});
+  var LINK=["Next, ","Now, ","Good. Now, ","Then, ","Okay, ","Alright. ","So, "];
+  function teach(e,i,n){
+    var t=text(e);
+    if(e.classList.contains("remember"))return "Here's the one thing to remember. "+t.replace(/^.*?Remember:\s*/,"");
+    if(e.classList.contains("fans"))return "So our answer is: "+t.replace(/^Result:\s*/,"")+". Nice work.";
+    if(e.classList.contains("frule")){var k=(e.querySelector(".fno")||{}).textContent||"";return "Formula number "+k+". "+t.replace(/^\d+/,"").replace("What it means.",". What it means:");}
+    if(i===0)return "Okay, let's work through this one together. "+t;
+    if(i===n-1)return "And finally, "+t;
+    return LINK[i%LINK.length]+t;
+  }
   function say(t){
     t=" "+t+" ";
     return t.replace(/×/g," times ").replace(/÷/g," divided by ").replace(/−/g," minus ").replace(/≤/g," less than or equal to ").replace(/≥/g," greater than or equal to ")
@@ -25218,7 +25239,7 @@ body.bklock .tabbar,body.bklock #fdbtn,body.bklock #navback{display:none!importa
   function text(el){
     var c=el.cloneNode(true);
     c.querySelectorAll(".fr").forEach(function(f){var n=f.querySelector(".n"),d=f.querySelector(".d");f.textContent=" "+(n?n.textContent:"")+" over "+(d?d.textContent:"")+" ";});
-    c.querySelectorAll(".src").forEach(function(s){s.textContent=s.textContent+". ";});
+    c.querySelectorAll(".src").forEach(function(s){var w=s.textContent;s.textContent=(/question/.test(w)?"From the question, ":/check/.test(w)?"Let's check. ":/step/.test(w)?w.replace("from","From")+", ":"Using "+w.replace(/①/,"one").replace(/②/,"two").replace(/③/,"three").replace(/④/,"four")+", ");});
     c.querySelectorAll("sup").forEach(function(s){s.textContent=" to the power "+s.textContent+" ";});
     return say(c.textContent||"");
   }
@@ -25234,8 +25255,8 @@ body.bklock .tabbar,body.bklock #fdbtn,body.bklock #navback{display:none!importa
   function play(){
     if(at>=Q.length){stop();return;}
     var e=Q[at];mark(e);nEl.textContent=(at+1)+" / "+Q.length;
-    var u=new SpeechSynthesisUtterance(text(e));u.rate=rate;u.lang="en-US";
-    u.onend=function(){if(Q[at]===e&&!paused){at++;setTimeout(play,250);}};
+    var u=new SpeechSynthesisUtterance(teach(e,at,Q.length));u.rate=rate*0.95;u.pitch=1.05;u.lang="en-US";if(VO)u.voice=VO;
+    u.onend=function(){if(Q[at]===e&&!paused){at++;setTimeout(play,550);}};
     S.cancel();S.speak(u);
   }
   function start(p){
