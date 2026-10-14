@@ -23864,7 +23864,14 @@ body.bklock .tabbar,body.bklock #fdbtn,body.bklock #navback{display:none!importa
   /* Study by Subject (and anything else) opens one subject here */
   window.kmfQTGo=function(s){
     if(S.some(function(x){return x.s===s;})){cur=s; wr("kmf.qt.tab",cur); tabsHtml(); render();}
-    var sec=document.getElementById("cqt"); if(sec){try{sec.scrollIntoView({behavior:"smooth",block:"start"});}catch(e){sec.scrollIntoView();} sec.classList.remove("qt-hl"); void sec.offsetWidth; sec.classList.add("qt-hl");}
+    var sec=document.getElementById("cqt"); if(!sec)return;
+    /* jump straight there, then keep correcting for ~4 s: chapters above load their boards as they come
+       into view and push this one down. A scroll or tap by the reader stops the correcting. */
+    var stop=false, n=0; function quit(){stop=true;}
+    ["wheel","touchstart","keydown"].forEach(function(ev){window.addEventListener(ev,quit,{once:true,passive:true});});
+    sec.scrollIntoView({block:"start"}); var t0=sec.getBoundingClientRect().top;
+    (function fix(){ if(stop)return; var t=sec.getBoundingClientRect().top; if(Math.abs(t-t0)>4)sec.scrollIntoView({block:"start"}); if(++n<20)setTimeout(fix,200); })();
+    sec.classList.remove("qt-hl"); void sec.offsetWidth; sec.classList.add("qt-hl");
   };
   window.kmfQTCounts=function(s){var x=S.filter(function(y){return y.s===s;})[0]; if(!x)return null; var L=last(),done=0; x.common.forEach(function(c){if(prog(c.ids,L).t)done++;}); return {common:x.common.length,rare:x.rare.length,done:done};};
   tabsHtml(); render(); if(window.kmfSubjRender)try{window.kmfSubjRender();}catch(e){}
