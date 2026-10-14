@@ -2770,7 +2770,7 @@ body.bklock .tabbar,body.bklock #fdbtn,body.bklock #navback{display:none!importa
     function step3(s){var c=s.q&&window.kmfQTCounts?window.kmfQTCounts(s.q):null; if(!c)return "";
       return '<div class="sj-step"><b class="sl">Step 3 · Practice by question type</b><div class="sj-row">'+c.common+' common types, each with an easy guide · '+c.rare+' rare types</div>'
         +'<div class="sj-row"><span class="sj-bar p"><i style="width:'+pct(c.done,c.common)+'%"></i></span><span class="sj-n">'+c.done+' / '+c.common+' types practised</span></div>'
-        +'<button type="button" class="sj-btn alt" data-sjq="'+s.q+'">Practice by question type &#8594;</button></div>';}
+        +'<button type="button" class="sj-btn alt" data-sjq="'+s.q+'">See its question types &#8594;</button></div>';}
     function render(){
       var known=rd("kmf.cb.known",{}), log=rd("kmf.log.v1",{}), last={}, g0=rd("kmf.g0.known",{});
       function zk(p){return Object.keys(g0).filter(function(k){return k.charAt(0)===p&&g0[k];}).length;}
@@ -23791,6 +23791,8 @@ body.bklock .tabbar,body.bklock #fdbtn,body.bklock #navback{display:none!importa
 .qt-rr .h{color:var(--ink-2,#4a5866)}
 .qt-rr .n{font:12.5px Arial,sans-serif;color:var(--ink-3,#7e8c92)}
 .qt-rr button{margin-left:auto;font:600 12.5px Arial,sans-serif;border:1px solid var(--blue,#1e6f9f);background:var(--panel,#fff);color:var(--blue,#1e6f9f);border-radius:999px;padding:3px 10px;cursor:pointer}
+.qt-note{flex-basis:100%;font:14px/1.5 Arial,sans-serif;color:#4a5866;margin-top:6px}
+.qt-go{font:600 12.5px Arial,sans-serif;border:1px solid #1e6f9f;background:#fff;color:#1e6f9f;border-radius:999px;padding:2px 8px;margin:2px;cursor:pointer}
 .qt-hl{animation:qthl 1.6s ease-out}
 @keyframes qthl{0%{box-shadow:0 0 0 4px rgba(30,111,159,.45)}100%{box-shadow:0 0 0 0 rgba(30,111,159,0)}}
 </style>
@@ -23840,6 +23842,16 @@ body.bklock .tabbar,body.bklock #fdbtn,body.bklock #navback{display:none!importa
     }).join("")+'</div>';
     host.innerHTML=h;
   }
+  /* open the type's problems as a book; the book may still be starting on a slow phone, so wait for it, never jump away */
+  function practise(btn,c,tries){
+    var ok=false; try{ok=!!(window.kmfBookSet&&window.kmfBookSet(c.name,c.ids));}catch(err){ok=false;}
+    if(ok){if(btn._qtl!=null){btn.textContent=btn._qtl; btn._qtl=null;} var n=btn.parentNode.querySelector(".qt-note"); if(n)n.remove(); return;}
+    if(tries<30){ if(btn._qtl==null){btn._qtl=btn.textContent; btn.textContent="Opening…";} setTimeout(function(){practise(btn,c,tries+1);},300); return; }
+    if(btn._qtl!=null){btn.textContent=btn._qtl; btn._qtl=null;}
+    var box=btn.parentNode, note=box.querySelector(".qt-note"); if(!note){note=document.createElement("div"); note.className="qt-note"; box.appendChild(note);}
+    note.innerHTML='The book view could not open here. Tap a problem to go to it: '+c.ids.map(function(id){var e=document.getElementById(id),pn=e&&e.querySelector(".pn"); return '<button type="button" class="qt-go" data-qtgo="'+id+'">'+(pn?pn.textContent:id)+'</button>';}).join(" ");
+  }
+  document.addEventListener("click",function(e){var g=e.target.closest?e.target.closest("[data-qtgo]"):null; if(!g)return; var el=document.getElementById(g.getAttribute("data-qtgo")); if(el)try{el.scrollIntoView({block:"start"});}catch(x){el.scrollIntoView();}});
   function find(k){var a=k.split(":"),s=S.filter(function(x){return x.s===a[0];})[0]; if(!s)return null; return s.common.concat(s.rare).filter(function(c){return c.key===a[1];})[0];}
   document.addEventListener("click",function(e){
     var t=e.target.closest?e.target.closest("[data-qts],[data-qta],[data-qtc],[data-qtp]"):null; if(!t)return;
@@ -23847,7 +23859,7 @@ body.bklock .tabbar,body.bklock #fdbtn,body.bklock #navback{display:none!importa
     if(t.hasAttribute("data-qta")){var o=t.getAttribute("data-qta")==="open"; [].forEach.call(host.querySelectorAll("details"),function(d){d.open=o;}); return;}
     if(t.hasAttribute("data-qtc")){var n=+t.getAttribute("data-qtc"); if(window.kmfCB8Go)window.kmfCB8Go(n); else location.hash="ccb8"; return;}
     var c=find(t.getAttribute("data-qtp")); if(!c)return;
-    if(!(window.kmfBookSet&&window.kmfBookSet(c.name,c.ids))){location.hash=c.ids[0];}
+    practise(t,c,0);
   });
   /* Study by Subject (and anything else) opens one subject here */
   window.kmfQTGo=function(s){
