@@ -23958,25 +23958,18 @@ window.__nbPlain=window.__nbPlain||function(h,plain){
   function kmfBySec(sec,q){var r=null;[].some.call(document.querySelectorAll(".prob[id] .srcbadge"),function(e){var t=e.textContent;if(new RegExp("Section\\s*"+sec+"\\b").test(t)&&new RegExp("\\bQ"+q+"\\b").test(t)){r=e.closest(".prob[id]").id;return true;}return false;});return r;}
   function clsIds(cls){try{if(!(cls in CD))clsHas(cls,""); var d=CD[cls]||"",ids=[],m,re=/P\.push\(\{id:"([^"]+)"/g;while((m=re.exec(d)))ids.push(m[1]);if(!ids.length){re=/class="prob" id="([^"]+)"/g;while((m=re.exec(d)))ids.push(m[1]);}return ids;}catch(e){return [];}}
   function resolveRef(t){t=String(t||"").trim(); if(!t)return null; var m;
-    if(/^https?:\/\//i.test(t))return {kind:"url",url:t};
-    if((m=/mock\s*(\d+)\D+?quant\s*(\d+)\D+?q\s*(\d+)/i.exec(t)))return {kind:"mock",mock:+m[1],quant:+m[2],q:+m[3]};
+    if((m=/^\s*(?:mock\s*)?(\d{1,2})\s*(?:[.·,\-\s]\s*(?:quant\s*)?|\s*quant\s*)(\d)\s*(?:[.·,\-\s]\s*q?\s*|\s*q\s*)(\d{1,2})\s*$/i.exec(t))&&(/mock/i.test(t)||/^\d+\.\d\.\d+$/.test(t))){var r={kind:"mock",mock:+m[1],quant:+m[2],q:+m[3]}; if(r.mock<1||r.mock>73||r.quant<1||r.quant>2)return {kind:"none"}; if(r.mock>=37)r.kmf=kmfBySec(2*(r.mock-37)+r.quant,r.q); return r;}
     var low=t.toLowerCase();
-    for(var i=0;i<CMAP.length;i++){if(low.indexOf(CMAP[i][0])>=0&&(m=/(\d+)\s*$/.exec(t))){var id=clsIds(CMAP[i][1])[+m[1]-1];if(id)return {kind:"class",cls:CMAP[i][1],id:id};}}
-    if((m=/section\s*(\d+)\D+?q\s*(\d+)/i.exec(t))){var id2=kmfBySec(m[1],m[2]);if(id2)return {kind:"kmf",id:id2};}
-    if((m=/^(?:kmf\s*)?(?:no\.?\s*)?#?\s*(\d{1,4})$/i.exec(t))){var id3=kmfByNum(m[1]);if(id3)return {kind:"kmf",id:id3};}
-    if(/^[a-z]+\d+$/i.test(t)&&document.getElementById(t))return {kind:"kmf",id:t};
+    for(var i=0;i<CMAP.length;i++){if(low.indexOf(CMAP[i][0])>=0&&(m=/#?\s*(\d+)\s*$/.exec(t))){var id=clsIds(CMAP[i][1])[+m[1]-1];if(id)return {kind:"class",cls:CMAP[i][1],id:id};}}
     return {kind:"none"};}
   function mockFind(r){var f=document.getElementById("qmFrame"),d=f&&f.contentDocument;if(!d)return null;var hit=null;
     [].some.call(d.querySelectorAll(".prob[id]"),function(p){var sc=p.closest("section"),h=sc&&sc.querySelector("h2,h3"),ht=h?h.textContent:"",b=p.querySelector(".qsrc,.srcbadge,.psrc"),bt=b?b.textContent:"";
       if(new RegExp("Mock\\s*"+r.mock+"\\b.*Quant\\s*"+r.quant+"\\b","i").test(ht)&&new RegExp("\\bQ"+r.q+"\\b").test(bt)){hit=p;return true;}return false;});return hit;}
-  function refQ(x){var r=resolveRef(x.ref); if(!r)return ""; if(r.kind==="none")return '<p>I could not find "'+esc(x.ref)+'". Try: <b>374</b>, <b>Section 15 Q2</b>, <b>geometry 4</b>, <b>Mock 28 Quant 2 Q4</b> or a web link.</p>';
-    if(r.kind==="url")return '<p><a href="'+esc(r.url)+'" target="_blank" rel="noopener">'+esc(r.url)+'</a></p>';
-    if(r.kind==="kmf"){var h=qFromMain(r.id);return h+(h.indexOf('class="opt"')<0?window.__nbOpts(r.id):"");}
+  function refQ(x){var r=resolveRef(x.ref); if(!r)return ""; if(r.kind==="none")return '<p>I could not find "'+esc(x.ref)+'". Type a mock like <b>Mock 44 Quant 2 Q2</b> (Mocks 1 to 73), or a class problem like <b>geometry 4</b> (Quant by Class, problem #4).</p>';
+    if(r.kmf){var h=qFromMain(r.kmf);return h+(h.indexOf('class="opt"')<0?window.__nbOpts(r.kmf):"");}
     if(r.kind==="class")return qFromClass(r.cls,r.id);
     var p=mockFind(r); if(p){var q=p.querySelector(".pq,.qtext,.stem");return q?q.innerHTML:"";} return '<p>Mock '+r.mock+' · Quant '+r.quant+' · Q'+r.q+'. Open the Quant Mocks once (chapter 36) and the question will show here.</p>';}
   function openRef(x){var r=resolveRef(x.ref); if(!r||r.kind==="none")return;
-    if(r.kind==="url"){window.open(r.url,"_blank");return;}
-    if(r.kind==="kmf"){if(window.kmfBookSet&&window.kmfBookSet("From my notebook",[r.id]))return; var e=document.getElementById(r.id); if(e)e.scrollIntoView(); return;}
     if(r.kind==="class"){var c=document.querySelector('.qbc-card[data-key="'+r.cls+'"]'); if(c){c.click();setTimeout(function(){var v=document.getElementById("qbcView");if(v)v.scrollIntoView();},300);} return;}
     var o=document.getElementById("qmOpen"); if(o)o.click(); var n=0;(function poll(){var p=mockFind(r); if(p){try{p.scrollIntoView({block:"center"});}catch(e){p.scrollIntoView();}return;} if(++n<60)setTimeout(poll,300);})();}
   function questionOf(x){if(x.manual)return refQ(x);var h=(x.cls&&!isMock(x)?qFromClass(x.cls,x.id):"")||x.q||(!x.cls?qFromMain(x.id):qFromMock(x.id));
@@ -23985,11 +23978,11 @@ window.__nbPlain=window.__nbPlain||function(h,plain){
   function ansOf(x){ if(!x.cls)return ans()[x.id]||""; try{var s=document.getElementById("qbc-"+x.cls); var a=s?keyFrom(JSON.parse(s.textContent),x.id):""; if(!a){var m=document.getElementById("qm-src"); if(m)a=keyFrom(m.textContent,x.id);} return a;}catch(e){return "";}}
   var CD={}; function clsHas(cls,id){try{if(!(cls in CD)){var e=document.getElementById("qbc-"+cls);CD[cls]=e?JSON.parse(e.textContent):"";} var d=CD[cls]; return !!d&&(d.indexOf('P.push({id:"'+id+'"')>=0||d.indexOf('id="'+id+'"')>=0);}catch(e){return false;}}
   function isMock(x){if(x.cls==="mocks")return true; if(x.cls&&clsHas(x.cls,x.id))return false; if(x.cat&&/^Mock/i.test(x.cat))return true; return !!x.cls&&!clsHas(x.cls,x.id);}
-  function srcOf(x){return x.manual?"My own":!x.cls?"KMF 1000":isMock(x)?"Quant Mocks":"Quant by Class";}
+  function srcOf(x){return x.manual?"My own":!x.cls?"Quant Mocks":isMock(x)?"Quant Mocks":"Quant by Class";}
   function cap(t){return String(t||"").replace(/-/g," ").replace(/\b\w/g,function(c){return c.toUpperCase();});}
   function subjOf(x){if(x.sub)return x.sub; if(x.manual)return ""; if(!x.cls)return x.ch||""; if(isMock(x)){var m=/^(Mock \d+[^·]*·[^·]*)/i.exec(x.cat||""); return m?m[1].trim():"Mock";} return cap(x.cls);}
   function kmfDet(x){var e=document.getElementById(x.id), b=e&&e.querySelector(".srcbadge"), t=b?b.textContent:(x.cat||""), sec=/Section\s*(\d+)/i.exec(t), q=/\bQ(\d+)/.exec(t);
-    return "#"+x.n+(sec?" · Section "+sec[1]:"")+(q?" · Q"+q[1]:"");}
+    return sec?"Mock "+(36+Math.ceil(+sec[1]/2))+" · Quant "+(+sec[1]%2?1:2)+(q?" · Q"+q[1]:""):"#"+x.n;}
   function clsDet(x){if(x.cat)return x.cat; try{var d=CD[x.cls]; if(d===undefined){clsHas(x.cls,x.id); d=CD[x.cls];} if(!d)return "";
       var m=d.indexOf('P.push({id:"'+x.id+'"'); if(m>=0){var seg=d.slice(m,m+600), sb=/sub:"([^"]*)"/.exec(seg), q=/q:"([^"]*)"/.exec(seg); return [sb&&sb[1],q&&q[1]].filter(Boolean).join(" · ");}
       var k=d.indexOf('<div class="prob" id="'+x.id+'"'); if(k>=0){var bb=/class="srcbadge">([^<]*)</.exec(d.slice(k,k+1500)); return bb?bb[1].replace(/&middot;/g,"·"):"";}}catch(e){} return "";}
@@ -24013,7 +24006,7 @@ window.__nbPlain=window.__nbPlain||function(h,plain){
       h+='<div class="nb2-tw"><div class="nb2-scroll"><table class="nb2-t"><tr><th>#</th><th>Date</th><th>Source</th><th>Subject</th><th>Problem</th><th>Trick</th><th>My note</th>'
         +COLS.map(function(c){return '<th class="cx" data-col="'+esc(c.id)+'"><span contenteditable="true" data-colname="'+esc(c.id)+'">'+esc(c.name)+'</span><span class="xc" data-delcol="'+esc(c.id)+'" title="Delete this column">×</span></th>';}).join("")+'</tr>'
         +L.map(function(x,i){var cx=x.cx||{};return '<tr data-k="'+esc(x.k)+'"'+(x.k===SELK?' class="sel"':'')+'><td>'+(i+1)+'<button type="button" class="rx" data-nbdel="'+esc(x.k)+'" title="Remove this row">remove</button></td><td>'+esc(when(x))+'</td>'
-          +'<td>'+esc(srcOf(x))+'</td>'+(x.manual?'<td contenteditable="true" data-f="sub">'+esc(x.sub||"")+'</td><td><div contenteditable="true" data-f="ref" data-was="'+esc(x.ref||"")+'" data-ph="type: 374 · Section 15 Q2 · geometry 4 · Mock 28 Quant 2 Q4 · https://…">'+esc(x.ref||"")+'</div>'+(x.ref?'<a data-nbref>open ↗</a>':'')+'</td>':'<td>'+esc(subjOf(x))+'</td><td><a data-nbopen>'+esc(detailOf(x))+'</a></td>')
+          +'<td>'+esc(srcOf(x))+'</td>'+(x.manual?'<td contenteditable="true" data-f="sub">'+esc(x.sub||"")+'</td><td><div contenteditable="true" data-f="ref" data-was="'+esc(x.ref||"")+'" data-ph="type: Mock 44 Quant 2 Q2 · or geometry 4">'+esc(x.ref||"")+'</div>'+(x.ref?'<a data-nbref>open ↗</a>':'')+'</td>':'<td>'+esc(subjOf(x))+'</td><td><a data-nbopen>'+esc(detailOf(x))+'</a></td>')
           +'<td contenteditable="true" data-f="t">'+esc(x.t||"")+'</td><td contenteditable="true" data-f="note">'+esc(x.note||"")+'</td>'
           +COLS.map(function(c){return '<td contenteditable="true" data-c="'+esc(c.id)+'">'+esc(cx[c.id]||"")+'</td>';}).join("")+'</tr>';}).join("")
         +'</table></div>'+(SELK?qBox(entry(SELK)):'<div></div>')+'</div>';
@@ -24107,7 +24100,7 @@ window.__nbPlain=window.__nbPlain||function(h,plain){
     var tr=t.closest("tr[data-k]"); if(!tr)return; var k=tr.getAttribute("data-k"), a=rd(), v=t.innerText.replace(/\n$/,"");
     a.forEach(function(x){if(x.k!==k)return; if(t.hasAttribute("data-f")){var f=t.getAttribute("data-f"); x[f]=v;} else if(t.hasAttribute("data-c")){x.cx=x.cx||{}; x.cx[t.getAttribute("data-c")]=v;}});
     wr(a);},350);});
-  host.addEventListener("focusout",function(e){var t=e.target; if(!(t.getAttribute&&t.getAttribute("data-f")==="ref"))return; var v=t.innerText.trim(); if(v===t.getAttribute("data-was"))return; var tr=t.closest("tr[data-k]"); if(!tr)return; clearTimeout(tmr); var k=tr.getAttribute("data-k"), a=rd(); a.forEach(function(x){if(x.k===k)x.ref=v;}); wr(a); SELK=k; setTimeout(draw,0);});
+  host.addEventListener("focusout",function(e){var t=e.target; if(!(t.getAttribute&&t.getAttribute("data-f")==="ref"))return; var v=t.innerText.trim(); if(v===t.getAttribute("data-was"))return; var tr=t.closest("tr[data-k]"); if(!tr)return; clearTimeout(tmr); var k=tr.getAttribute("data-k"), a=rd(); a.forEach(function(x){if(x.k===k)x.ref=v;}); wr(a); SELK=k; var nx=e.relatedTarget, sel=null; if(nx&&nx.closest&&host.contains(nx)){var nr=nx.closest("tr[data-k]"), at=nx.getAttribute("data-f")?'[data-f="'+nx.getAttribute("data-f")+'"]':nx.getAttribute("data-c")?'[data-c="'+nx.getAttribute("data-c")+'"]':null; if(nr&&at)sel='tr[data-k="'+nr.getAttribute("data-k")+'"] '+at;} setTimeout(function(){draw(); if(sel){var el=host.querySelector(sel); if(el)el.focus();}},0);});
   host.addEventListener("paste",function(e){var t=e.target, ed=t.closest&&t.closest("[contenteditable]"); if(!ed)return; var cd=e.clipboardData; if(!cd)return; e.preventDefault(); document.execCommand("insertText",false,window.__nbPlain(cd.getData("text/html"),cd.getData("text/plain")));});
   host.addEventListener("keydown",function(e){var t=e.target; if(t.getAttribute&&t.getAttribute("data-f")==="ref"&&e.key==="Enter"){e.preventDefault();t.blur();return;} if(t.hasAttribute&&t.hasAttribute("data-colname")&&e.key==="Enter"){e.preventDefault();t.blur();}});
   if(SQ)SQ.addEventListener("input",function(){setTimeout(draw,0);});
