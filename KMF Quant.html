@@ -43498,21 +43498,86 @@ function qbkBoot() {
   function ans(p){if(p.kind==="num")return p.nt||"";if(Array.isArray(p.right))return p.right.map(function(i){return L[i];}).join(", ");var c=p.kind==="qc"?["Quantity A is greater","Quantity B is greater","The two are equal","Cannot be determined"][p.right]:strip((p.choices||[])[p.right]);return L[p.right]+(c?" · "+c:"");}
   function q(p){var t=strip(p.stem).replace(/\s*Quantity ([AB])\s*:?\s*/g,"\nQuantity $1: ").trim();if(p.kind!=="qc"&&p.choices&&p.choices.length)t+="\n"+p.choices.map(function(c,i){return "("+L[i]+") "+strip(c);}).join("\n");return t;}
   function d(t){try{var x=new Date(t);return x.getFullYear()+"-"+("0"+(x.getMonth()+1)).slice(-2)+"-"+("0"+x.getDate()).slice(-2);}catch(e){return "";}}
-  function build(){var a={};try{a=JSON.parse(localStorage.getItem("gre.attempts.v1")||"{}")||{};}catch(e){}
-    var rows=[["Topic","Detail","Last tried","Mock","Quant","Question","Type","Tries","Times wrong","Last try","Correct answer","Source","Question text","Why I got it wrong","Rule to remember"]],n=0;
-    (window.P||[]).forEach(function(p){var r=a[p.id];if(!r||!r.wrong)return;var m=/^M(\d+) Q(\d)$/.exec(p.sec||"");if(!m)return;n++;
-      var dt=(window.CATS||{})[p.id]||"Other";rows.push([mainOf(dt),dt,d(r.t),"Mock "+m[1],"Quant "+m[2],p.q||"",p.type||"",String(r.tries),String(r.wrong),r.last?"Right":"Wrong",ans(p),p.note||("Mock "+m[1]+" · Quant "+m[2]+" · "+p.q),q(p),"",""]);});
-    var head=rows.shift(); rows.sort(function(x,y){return x[0]<y[0]?-1:x[0]>y[0]?1:(+x[3].slice(5))-(+y[3].slice(5))||(x[4]<y[4]?-1:x[4]>y[4]?1:0)||(+x[5].slice(1))-(+y[5].slice(1));});
-    var T={}; rows.forEach(function(r){var t=T[r[0]]||(T[r[0]]={q:0,w:0,still:0,det:{}}); t.q++; t.w+=+r[8]; if(r[9]==="Wrong")t.still++; t.det[r[1]]=(t.det[r[1]]||0)+1;});
-    var sum=[["Topic","Questions I got wrong","Still wrong (last try)","Total wrong answers","Share of my mistakes","Inside this topic"]].concat(Object.keys(T).sort(function(a,b){return T[b].q-T[a].q||T[b].still-T[a].still;}).map(function(k){return [k,String(T[k].q),String(T[k].still),String(T[k].w),Math.round(T[k].q/Math.max(1,n)*100)+"%",Object.keys(T[k].det).sort(function(a,b){return T[k].det[b]-T[k].det[a];}).map(function(z){return z+" "+T[k].det[z];}).join(", ")];}));
-    return {rows:[head].concat(rows),sum:sum,n:n};}
-  function save(){var b=build(); if(!b.n){alert("No mistakes saved yet. Get a question wrong in a mock (or in its questions here) and it will appear.");return;}
-    var blob=xlsx([{name:"By topic",rows:b.sum,w:[26,22,22,20,20,44]},{name:"My mistakes",rows:b.rows,w:[24,20,11,9,9,9,22,7,11,9,26,26,80,30,30]}]),u=URL.createObjectURL(blob),l=document.createElement("a");l.href=u;l.download="my-mock-mistakes.xlsx";document.body.appendChild(l);l.click();setTimeout(function(){URL.revokeObjectURL(u);l.remove();},800);}
-  function add(){var sec=document.getElementById("revise");if(!sec)return false;if(sec.querySelector(".mkxl"))return true;var hd=sec.querySelector(".chhead");
-    var w=document.createElement("div");w.className="mkxlbar";w.innerHTML='<button type="button" class="mkxl">⬇ Save my mistakes as Excel file</button><span>Only questions you got wrong in the mocks. Two empty columns let you write why, and the rule to remember.</span>';
-    w.querySelector(".mkxl").addEventListener("click",save);if(hd)hd.parentNode.insertBefore(w,hd.nextSibling);else sec.insertBefore(w,sec.firstChild);return true;}
-  var st=document.createElement("style");st.textContent=".mkxlbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:10px 0 14px;font:13px/1.4 Arial,sans-serif;color:var(--ink-3,#667)}.mkxl{font:700 13px Arial,sans-serif;border:1px solid #217346;background:#217346;color:#fff;border-radius:999px;padding:8px 14px;cursor:pointer}.mkxl:hover{background:#1a5c38}";document.head.appendChild(st);
-  var tries=0;(function poll(){if(add()||++tries>60)return;setTimeout(poll,500);})();
+
+  function A(){try{return JSON.parse(localStorage.getItem("gre.attempts.v1")||"{}")||{};}catch(e){return {};}}
+  function R(){try{return JSON.parse(localStorage.getItem("kmf.reports.v1")||"[]")||[];}catch(e){return [];}}
+  var PM=null; function pm(){if(!PM){PM={};(window.P||[]).forEach(function(p){PM[p.id]=p;});}return PM;}
+  function mockOf(p){var m=/^M(\d+) Q(\d)$/.exec(p&&p.sec||"");return m?{m:+m[1],q:+m[2]}:null;}
+  function topic(id){return mainOf((window.CATS||{})[id]||"Other");}
+  function pnum(t){t=String(t).replace(/[−–]/g,"-").replace(/[,\s$%]/g,"");var m=t.match(/^(-?\d*\.?\d+)\/(-?\d*\.?\d+)$/);if(m){var d=parseFloat(m[2]);return d===0?NaN:parseFloat(m[1])/d;}return /^-?\d*\.?\d+$/.test(t)?parseFloat(t):NaN;}
+  function emp(g){return g===undefined||g===null||(Array.isArray(g)&&!g.length)||(!Array.isArray(g)&&String(g).trim()==="");}
+  function ok(p,g){if(emp(g))return false;if(p.kind==="num"){var v=pnum(g);return isFinite(v)&&Math.abs(v-p.num)<Math.max(1e-6,Math.abs(p.num)*1e-6);}var w=Array.isArray(p.right)?p.right.slice():[p.right],m=Array.isArray(g)?g.slice():[g];return m.length===w.length&&m.every(function(i){return w.indexOf(i)>=0;});}
+  function pct(a,b){return b?Math.round(a/b*100)+"%":"–";}
+  function esc(t){return String(t).replace(/&/g,"&amp;").replace(/</g,"&lt;");}
+  function joinTop(o){return Object.keys(o).sort(function(x,y){return o[y]-o[x];}).map(function(k){return k+" "+o[k];}).join(", ");}
+  /* ---------- the numbers ---------- */
+  function stats(){var a=A(),P=pm(),top={},mk={},tot={};
+    (window.P||[]).forEach(function(p){var mo=mockOf(p);if(!mo)return;tot[mo.m]=(tot[mo.m]||0)+1;var r=a[p.id];if(!r)return;var t=topic(p.id);
+      var T=top[t]||(top[t]={n:0,ok:0,bad:0,ever:0,ids:[]}); T.n++; if(r.last)T.ok++; else {T.bad++;T.ids.push(p.id);} if(r.wrong)T.ever++;
+      var M=mk[mo.m]||(mk[mo.m]={n:0,ok:0,bad:0,wt:{},last:0,ids:[]}); M.n++; if(r.last)M.ok++; else {M.bad++;M.ids.push(p.id); M.wt[t]=(M.wt[t]||0)+1;} if(r.t>M.last)M.last=r.t;});
+    return {top:top,mk:mk,tot:tot};}
+  function reps(){var P=pm();return R().slice().sort(function(x,y){return x.when-y.when;}).map(function(r,i){var wt={},bt={},n=0,okc=0,bl=0,wid=[];
+      (r.ids||[]).forEach(function(id){var p=P[id];if(!p)return;n++;var g=(r.ans||{})[id],t=topic(id);if(emp(g)){bl++;wt[t]=(wt[t]||0)+1;wid.push([id,1]);}else if(ok(p,g))okc++;else {wt[t]=(wt[t]||0)+1;wid.push([id,0]);}bt[t]=(bt[t]||0)+1;});
+      var right=r.right!=null?r.right:okc,total=r.total||n;return {i:i+1,when:r.when,label:r.label||"Mock",right:right,total:total,p:total?right/total:0,wrong:total-right-bl,blank:bl,used:r.used,mins:r.mins,timed:r.timed,wt:wt,wid:wid};});}
+  function trend(L){if(L.length<2)return "";var k=Math.min(3,Math.floor(L.length/2)),last=L.slice(-k),prev=L.slice(-2*k,-k);
+    function av(z,f){return z.reduce(function(s,x){return s+f(x);},0)/z.length;}
+    var sp=av(last,function(x){return x.p;})*100,pp=av(prev,function(x){return x.p;})*100,sw=av(last,function(x){return x.total-x.right;}),pw=av(prev,function(x){return x.total-x.right;});
+    var up=sp-pp;return '<p class="tk-trend '+(up>=0?"good":"bad")+'"><b>'+(up>1?"▲ Improving":up<-1?"▼ Going down":"■ About the same")+'.</b> Your last '+k+' mock'+(k>1?"s":"")+' averaged <b>'+Math.round(sp)+'%</b>, the '+k+' before averaged <b>'+Math.round(pp)+'%</b>. Mistakes per mock: <b>'+pw.toFixed(1)+' → '+sw.toFixed(1)+'</b> ('+(sw<pw?"fewer":sw>pw?"more":"same")+').</p>';}
+  function chart(L){if(!L.length)return "";var W=640,H=210,l=38,r=34,t=14,b=34,n=L.length,X=function(i){return n<2?(l+(W-l-r)/2):l+i*(W-l-r)/(n-1);},Y=function(v){return t+(1-v)*(H-t-b);};
+    var g="";[0,.25,.5,.75,1].forEach(function(v){g+='<line x1="'+l+'" x2="'+(W-r)+'" y1="'+Y(v)+'" y2="'+Y(v)+'" class="tk-grid"/><text x="'+(l-6)+'" y="'+(Y(v)+4)+'" class="tk-ax" text-anchor="end">'+(v*100)+'%</text>';});
+    var pts=L.map(function(x,i){return X(i)+","+Y(x.p);}).join(" ");
+    var dots=L.map(function(x,i){return '<circle cx="'+X(i)+'" cy="'+Y(x.p)+'" r="4" class="tk-dot"><title>'+esc(x.label)+": "+x.right+"/"+x.total+'</title></circle>'+(n<=14?'<text x="'+X(i)+'" y="'+(Y(x.p)-8)+'" class="tk-val" text-anchor="middle">'+Math.round(x.p*100)+'</text>':"")+'<text x="'+X(i)+'" y="'+(H-14)+'" class="tk-ax" text-anchor="middle">'+(n<=14?esc(x.label.replace(/^Mock\s*/,"M").replace(/\s*·\s*Quant\s*/," Q").replace(/Full Mock\s*/,"M")):x.i)+'</text>';}).join("");
+    return '<svg class="tk-chart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Score per finished mock">'+g+'<polyline points="'+pts+'" class="tk-line"/>'+dots+'</svg>';}
+  function lab(id){var p=pm()[id],mo=mockOf(p);return mo?"Mock "+mo.m+" · Quant "+mo.q+" · "+p.q:id;}
+  function list(ids,cols){if(!ids.length)return "";return '<tr class="tk-x" hidden><td colspan="'+cols+'"><div class="tk-l">'+ids.map(function(z){var id=Array.isArray(z)?z[0]:z,bl=Array.isArray(z)&&z[1];return '<a href="#'+id+'" data-tkgo="'+id+'">'+esc(lab(id))+' <span>· '+esc(topic(id))+(bl?' · blank':'')+'</span></a>';}).join("")+'</div></td></tr>';}
+  function caret(n){return n?'<span class="tk-c">▸</span> ':'';}
+  /* ---------- panels ---------- */
+  function revPanel(){var S=stats(),ks=Object.keys(S.top).sort(function(x,y){return S.top[y].bad-S.top[x].bad||S.top[y].n-S.top[x].n;});
+    if(!ks.length)return '<p class="chsub">Your tracker fills in as you answer mock questions.</p>';
+    var h='<p class="tk-tip">Tap a row to see the questions you got wrong. Tap a question to go to it.</p><h3 class="tk-h">By topic · all mocks together</h3><div class="tk-tw"><table class="tk-t"><tr><th>Topic</th><th>Answered</th><th>Right</th><th>Wrong</th><th>Accuracy</th><th></th></tr>';
+    ks.forEach(function(k){var T=S.top[k],ac=T.n?T.ok/T.n:0;h+='<tr class="'+(T.ids.length?'tk-r':'')+'"><td>'+caret(T.ids.length)+esc(k)+'</td><td>'+T.n+'</td><td>'+T.ok+'</td><td class="b">'+T.bad+'</td><td>'+pct(T.ok,T.n)+'</td><td><span class="tk-bar"><i style="width:'+Math.round(ac*100)+'%"></i></span></td></tr>'+list(T.ids,6);});
+    h+='</table></div><h3 class="tk-h">By mock</h3><div class="tk-tw"><table class="tk-t"><tr><th>Mock</th><th>Answered</th><th>Right</th><th>Wrong</th><th>Accuracy</th><th>Wrong by topic</th></tr>';
+    Object.keys(S.mk).map(Number).sort(function(x,y){return x-y;}).forEach(function(m){var M=S.mk[m];h+='<tr class="'+(M.ids.length?'tk-r':'')+'"><td>'+caret(M.ids.length)+'Mock '+m+'</td><td>'+M.n+' / '+S.tot[m]+'</td><td>'+M.ok+'</td><td class="b">'+M.bad+'</td><td>'+pct(M.ok,M.n)+'</td><td>'+esc(joinTop(M.wt))+'</td></tr>'+list(M.ids,6);});
+    return h+'</table></div>';}
+  function repPanel(){var L=reps();if(!L.length)return '<p class="chsub">Finish a mock (Start a full mock) and your progress chart starts here.</p>';
+    var h='<h3 class="tk-h">My progress · score in every finished mock</h3>'+chart(L)+trend(L)+'<p class="tk-tip">Tap a row to see the questions you got wrong in that mock. Tap a question to go to it.</p><div class="tk-tw"><table class="tk-t"><tr><th>#</th><th>Date</th><th>Mock</th><th>Score</th><th>%</th><th>Wrong</th><th>Blank</th><th>Change</th><th>Wrong by topic</th></tr>';
+    L.slice().reverse().forEach(function(x,j,arr){var pv=L[x.i-2],ch=pv?Math.round((x.p-pv.p)*100):null;
+      h+='<tr class="'+(x.wid.length?'tk-r':'')+'"><td>'+caret(x.wid.length)+x.i+'</td><td>'+new Date(x.when).toLocaleDateString(undefined,{day:"numeric",month:"short"})+'</td><td>'+esc(x.label)+'</td><td>'+x.right+' / '+x.total+'</td><td>'+Math.round(x.p*100)+'%</td><td class="b">'+x.wrong+'</td><td>'+x.blank+'</td><td class="'+(ch==null?"":ch>=0?"g":"b")+'">'+(ch==null?"first":(ch>0?"▲ +":ch<0?"▼ ":"■ ")+ch+"%")+'</td><td>'+esc(joinTop(x.wt))+'</td></tr>'+list(x.wid,9);});
+    return h+'</table></div>';}
+  /* ---------- Excel ---------- */
+  function build(){var a=A(),P=pm(),S=stats(),L=reps(),n=0;
+    var rows=[["Topic","Detail","Last tried","Mock","Quant","Question","Type","Tries","Times wrong","Last try","Correct answer","Source","Question text","Why I got it wrong","Rule to remember"]];
+    (window.P||[]).forEach(function(p){var r=a[p.id];if(!r||!r.wrong)return;var mo=mockOf(p);if(!mo)return;n++;var dt=(window.CATS||{})[p.id]||"Other";
+      rows.push([mainOf(dt),dt,d(r.t),"Mock "+mo.m,"Quant "+mo.q,p.q||"",p.type||"",String(r.tries),String(r.wrong),r.last?"Right":"Wrong",ans(p),p.note||("Mock "+mo.m+" · Quant "+mo.q+" · "+p.q),q(p),"",""]);});
+    var head=rows.shift();rows.sort(function(x,y){return x[0]<y[0]?-1:x[0]>y[0]?1:(+x[3].slice(5))-(+y[3].slice(5))||(x[4]<y[4]?-1:x[4]>y[4]?1:0)||(+x[5].slice(1))-(+y[5].slice(1));});
+    var ks=Object.keys(S.top).sort(function(x,y){return S.top[y].bad-S.top[x].bad||S.top[y].n-S.top[x].n;});
+    var top=[["Topic","Questions answered","Right (last try)","Wrong (last try)","Accuracy","Ever got wrong"]].concat(ks.map(function(k){var T=S.top[k];return [k,String(T.n),String(T.ok),String(T.bad),pct(T.ok,T.n),String(T.ever)];}));
+    var ms=Object.keys(S.mk).map(Number).sort(function(x,y){return x-y;});
+    var bym=[["Mock","Questions in mock","Answered","Right","Wrong","Accuracy","Last practised","Wrong by topic"]].concat(ms.map(function(m){var M=S.mk[m];return ["Mock "+m,String(S.tot[m]),String(M.n),String(M.ok),String(M.bad),pct(M.ok,M.n),d(M.last),joinTop(M.wt)];}));
+    var mxt=[["Mock"].concat(ks.map(function(k){return k+" (wrong)";}))].concat(ms.map(function(m){return ["Mock "+m].concat(ks.map(function(k){return String(S.mk[m].wt[k]||0);}));}));
+    var prog=[["#","Date","Mock","Score","Total","Percent","Wrong","Blank","Change vs previous","Time used (min)","Timed?","Wrong by topic"]].concat(L.map(function(x){var pv=L[x.i-2];return [String(x.i),d(x.when),x.label,String(x.right),String(x.total),Math.round(x.p*100)+"%",String(x.wrong),String(x.blank),pv?((x.p-pv.p>=0?"+":"")+Math.round((x.p-pv.p)*100)+"%"):"first",x.used!=null?String(Math.round(x.used/60)):"",x.timed?"Yes":"No",joinTop(x.wt)];}));
+    return {n:n+L.length+ks.length,SH:[{name:"By topic",rows:top,w:[26,18,16,16,12,14]},{name:"By mock",rows:bym,w:[11,16,11,9,9,11,14,50]},{name:"Mock x topic",rows:mxt,w:[11].concat(ks.map(function(){return 18;}))},{name:"Progress",rows:prog,w:[5,11,26,8,8,9,8,8,18,15,8,50]},{name:"My mistakes",rows:[head].concat(rows),w:[24,20,11,9,9,9,22,7,11,9,26,26,80,30,30]}]};}
+  function save(){var b=build();if(!b.n){alert("Nothing to save yet. Answer some mock questions or finish a mock first.");return;}
+    var blob=xlsx(b.SH),u=URL.createObjectURL(blob),l=document.createElement("a");l.href=u;l.download="my-mock-tracker.xlsx";document.body.appendChild(l);l.click();setTimeout(function(){URL.revokeObjectURL(u);l.remove();},800);}
+  function click(e){var a=e.target.closest("[data-tkgo]");if(a){e.preventDefault();var el=document.getElementById(a.getAttribute("data-tkgo"));if(el){try{el.scrollIntoView({behavior:"smooth",block:"start"});}catch(z){el.scrollIntoView();}el.classList.add("tk-flash");setTimeout(function(){el.classList.remove("tk-flash");},2200);}return;}
+    var tr=e.target.closest("tr.tk-r");if(!tr)return;var x=tr.nextElementSibling;if(x&&x.classList.contains("tk-x")){x.hidden=!x.hidden;tr.classList.toggle("open",!x.hidden);}}
+  /* ---------- mount ---------- */
+  function bar(txt){var w=document.createElement("div");w.className="mkxlbar";w.innerHTML='<button type="button" class="mkxl">⬇ Save my tracker as Excel file</button><span>'+txt+'</span>';w.querySelector(".mkxl").addEventListener("click",save);return w;}
+  function mount(id,body,panel,txt){var sec=document.getElementById(id);if(!sec)return false;var box=sec.querySelector(".tk-box");
+    if(!box){var hd=sec.querySelector(".chhead");sec.insertBefore(bar(txt),hd?hd.nextSibling:sec.firstChild);box=document.createElement("div");box.className="tk-box";box.addEventListener("click",click);var bd=document.getElementById(body);sec.insertBefore(box,bd||null);}
+    box.innerHTML=panel();return true;}
+  function draw(){mount("revise","revbody",revPanel,"Five sheets: by topic, by mock, mock × topic, progress over time, and every mistake with space for your notes.");
+    mount("reports","repbody",repPanel,"The same file: your score in every finished mock, and whether your mistakes go up or down.");}
+  var st=document.createElement("style");st.textContent=".mkxlbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:10px 0 14px;font:13px/1.4 Arial,sans-serif;color:var(--ink-3,#667)}.mkxl{font:700 13px Arial,sans-serif;border:1px solid #217346;background:#217346;color:#fff;border-radius:999px;padding:8px 14px;cursor:pointer}.mkxl:hover{background:#1a5c38}"
+   +".tk-box{margin:0 0 18px}.tk-h{font:700 15px Arial,sans-serif;margin:16px 0 8px;color:var(--ink,#222)}.tk-tw{overflow-x:auto}.tk-t{border-collapse:collapse;width:100%;font:13px/1.35 Arial,sans-serif;min-width:520px}.tk-t th{background:#217346;color:#fff;text-align:left;padding:6px 8px;font-weight:700;white-space:nowrap}.tk-t td{border-bottom:1px solid var(--line,#dde);padding:6px 8px;vertical-align:top}.tk-t td.b{color:#b3261e;font-weight:700}.tk-t td.g{color:#217346;font-weight:700}"
+   +".tk-bar{display:inline-block;width:110px;height:8px;border-radius:4px;background:#f3d6d3;overflow:hidden;vertical-align:middle}.tk-bar i{display:block;height:100%;background:#217346}"
+   +".tk-chart{width:100%;max-width:700px;height:auto;display:block;margin:4px 0 6px}.tk-grid{stroke:var(--line,#dde);stroke-width:1}.tk-ax{font:10.5px Arial,sans-serif;fill:var(--ink-3,#778)}.tk-val{font:700 10.5px Arial,sans-serif;fill:var(--ink,#222)}.tk-line{fill:none;stroke:#1e6f9f;stroke-width:2.5}.tk-dot{fill:#1e6f9f;stroke:#fff;stroke-width:1.5}"
+   +".tk-r{cursor:pointer}.tk-r:hover td{background:rgba(33,115,70,.06)}.tk-c{display:inline-block;font-size:10px;color:#217346;transition:transform .15s}.tk-r.open .tk-c{transform:rotate(90deg)}.tk-x td{background:rgba(33,115,70,.05)}.tk-l{display:flex;flex-wrap:wrap;gap:6px}.tk-l a{font:600 12.5px Arial,sans-serif;color:#1e6f9f;background:#fff;border:1px solid #c9d8e3;border-radius:999px;padding:4px 10px;text-decoration:none}.tk-l a:hover{background:#e8f0fe}.tk-l a span{font-weight:400;color:#6b7680}.tk-tip{font:12.5px Arial,sans-serif;color:var(--ink-3,#778);margin:6px 0 0}.tk-flash{outline:3px solid #f2b705;outline-offset:4px;transition:outline-color 2s}.tk-trend{font:14px/1.45 Arial,sans-serif;margin:6px 0 10px;padding:8px 12px;border-radius:8px}.tk-trend.good{background:#e7f4ec}.tk-trend.bad{background:#fbe9e7}";
+  document.head.appendChild(st);
+  var tries=0;(function poll(){if(document.getElementById("revise")&&document.getElementById("reports")){draw();
+      var g=window.GREREC;if(g&&!g.__tk){window.GREREC=function(){var r=g.apply(this,arguments);setTimeout(draw,50);return r;};window.GREREC.__tk=1;}
+      var rr=window.renderReports;if(rr&&!rr.__tk){window.renderReports=function(){var r=rr.apply(this,arguments);setTimeout(draw,50);return r;};window.renderReports.__tk=1;}
+      return;} if(++tries<60)setTimeout(poll,500);})();
 })();
 <\/script>
 <script id="askg-js">
